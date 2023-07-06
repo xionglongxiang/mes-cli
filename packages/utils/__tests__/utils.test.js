@@ -2,6 +2,6 @@
 
 const utils = require('..');
 
-describe('@imooc-cli/utils', () => {
+describe('@mes-cli/utils', () => {
     it('needs tests');
 });

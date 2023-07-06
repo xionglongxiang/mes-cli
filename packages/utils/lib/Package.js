@@ -78,11 +78,13 @@ class Package {
   }
 
   async getVersion() {
+    
     await this.prepare();
     return await this.exists() ? this.getPackage().version : null;
   }
 
   async getLatestVersion() {
+    log.verbose('get latest version:')
     const version = await this.getVersion();
     if (version) {
       const latestVersion = await npm.getNpmLatestSemverVersion(this.packageName, version);
@@ -92,6 +94,8 @@ class Package {
   }
 
   async update() {
+    log.verbose('update:')
+
     const latestVersion = await this.getLatestVersion();
     return npminstall({
       root: this.targetPath,

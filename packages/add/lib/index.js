@@ -8,10 +8,13 @@ const npminstall = require('npminstall')
 
 const { homedir } = require('os')
 const { ADD_CONTENT,DEFAULT_TYPE,ADD_PAGES_TEMPLATE,DEFAULT_CLI_HOME,ADD_CODE_TEMPLATE,SHOW_FILE_TYPE} = require('./const')
-const {  inquirer,log ,npm,spinner,exec,sleep} = require('@imooc-cli/utils');
+const {  inquirer,log ,npm,spinner,exec,sleep} = require('@mes-cli/utils');
+
 
 const useOriginNpm = false;
 async function add () {
+
+  console.log('add')
   log.level = process.env.LOG_LEVEL; // 进入add后log.level的层级还是info
   let targetPath // 缓存文件地址
   let rootDir = process.cwd() // 目标目录
@@ -21,7 +24,9 @@ async function add () {
   targetPath = path.resolve(`${homedir()}/${DEFAULT_CLI_HOME}`, 'addTemplate');
   log.verbose('targetPath',targetPath)
   // 1. 选择添加的类型
+  console.log('before addtype! 1')
   let addType = await getAddType()
+  console.log('before addtype! 2')
   log.verbose('addType',addType)
   let addName
   if(addType === 'page') {
@@ -36,7 +41,7 @@ async function add () {
     selectedTemplate.templateVersion = await npm.getLatestVersion(selectedTemplate.npmName)
     // 下载对应的模版文件
     // 下载的模版需要安装到缓存中，安装时从本地缓存文件中查找（更新/安装）
-    // 指定存放模版文件的目录为 (/Users/liumeng/.imooc-cli/addTemplate)
+    // 指定存放模版文件的目录为 (/Users/liumeng/.mes-cli/addTemplate)
     // 判断缓存文件是否存在（更新/安装的逻辑判断）
     await updateOrInstall(targetPath,selectedTemplate)
     // 3. 读取缓存项目中的package.json和当前项目中的package.json信息进行对比
@@ -313,6 +318,7 @@ async function dependencyInit(targetPath,selectedTemplate){
 }
 // 依赖对比
 function dependencyDiff(template,origin,type){
+  console.log(3)
   if(template && origin){
     const templateList = Object.keys(template)
     const originList = Object.keys(origin)

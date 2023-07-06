@@ -5,9 +5,9 @@ const program = require('commander');
 const colors = require('colors/safe');
 const userHome = require('user-home');
 const semver = require('semver');
-const { log, npm, Package, exec, locale } = require('@imooc-cli/utils');
+const { log, npm, Package, exec, locale } = require('@mes-cli/utils');
 const packageConfig = require('../package');
-const add = require('@imooc-cli/add')
+const add = require('@mes-cli/add')
 
 const {
   LOWEST_NODE_VERSION,
@@ -34,13 +34,11 @@ function registerCommand() {
   program.version(packageConfig.version).usage('<command> [options]');
 
   program
-    .command('learn')
-    .description('访问课程链接')
+    .command('about')
+    .description('关于mes-cli')
     .action(() => {
-      log.success('欢迎学习', '慕课网前端架构师课程');
-      log.success('课程链接', 'https://coding.imooc.com/class/445.html');
-      log.success('课程介绍', '小宇宙燃烧吧');
-      log.success('作者介绍', 'Sam@2020');
+      log.success('欢迎使用', 'MES统一研发脚手架');
+      log.success('作者介绍', 'Longxiang Xiong');
     });
 
   program
@@ -54,8 +52,9 @@ function registerCommand() {
     .option('--packagePath <packagePath>', '手动指定init包路径')
     .option('--force', '覆盖当前路径文件（谨慎使用）')
     .action(async (type, { packagePath, force }) => {
-      const packageName = '@imooc-cli/init';
+      const packageName = '@mes-cli/init';
       const packageVersion = '1.0.0';
+      console.log(packagePath, packageName, packageVersion)
       await execCommand({ packagePath, packageName, packageVersion }, { type, force });
     });
 
@@ -88,7 +87,7 @@ function registerCommand() {
       cnpm,
       buildCmd,
     }) => {
-      const packageName = '@imooc-cli/publish';
+      const packageName = '@mes-cli/publish';
       const packageVersion = '1.0.0';
       if (force) {
         refreshToken = true;
@@ -118,14 +117,14 @@ function registerCommand() {
     .option('--ossAccessKey <ossAccessKey>', 'oss accessKey')
     .option('--ossSecretKey <ossSecretKey>', 'oss secretKey')
     .action(async ({ packagePath, region, bucket, ossAccessKey, ossSecretKey }) => {
-      const packageName = '@imooc-cli/replace';
+      const packageName = '@mes-cli/replace';
       const packageVersion = '1.0.0';
       await execCommand({ packagePath, packageName, packageVersion }, { region, bucket, ossAccessKey, ossSecretKey });
     });
 
   program
     .command('clean')
-    .description('清空缓存文件')
+    .description('清空缓存文件 2')
     .option('-a, --all', '清空全部')
     .option('-d, --dep', '清空依赖文件')
     .action((options) => {
@@ -157,6 +156,7 @@ function registerCommand() {
 
 async function execCommand({ packagePath, packageName, packageVersion }, extraOptions) {
   let rootFile;
+  console.log('exec commannd')
   try {
     if (packagePath) {
       const execPackage = new Package({
@@ -182,6 +182,7 @@ async function execCommand({ packagePath, packageName, packageVersion }, extraOp
       } else {
         await initPackage.install();
       }
+      
       rootFile = initPackage.getRootFilePath();
     }
     const _config = Object.assign({}, config, extraOptions, {
@@ -189,6 +190,7 @@ async function execCommand({ packagePath, packageName, packageVersion }, extraOp
     });
     if (fs.existsSync(rootFile)) {
       const code = `require('${rootFile}')(${JSON.stringify(_config)})`;
+      console.log('code ', code)
       const p = exec('node', ['-e', code], { 'stdio': 'inherit' });
       p.on('error', e => {
         log.verbose('命令执行失败:', e);
@@ -203,7 +205,7 @@ async function execCommand({ packagePath, packageName, packageVersion }, extraOp
       throw new Error('入口文件不存在，请重试！');
     }
   } catch (e) {
-    log.error(e.message);
+    log.error('exec command', e.message);
   }
 }
 
@@ -233,10 +235,12 @@ async function prepare() {
   checkInputArgs(); // 检查用户输入参数
   checkEnv(); // 检查环境变量
   await checkGlobalUpdate(); // 检查工具是否需要更新
+  console.log('checkGlobalUpdate finish')
 }
 
 async function checkGlobalUpdate() {
-  log.verbose('检查 imooc-cli 最新版本');
+  log.verbose('检查 mes-cli 最新版本');
+
   const currentVersion = packageConfig.version;
   const lastVersion = await npm.getNpmLatestSemverVersion(NPM_NAME, currentVersion);
   if (lastVersion && semver.gt(lastVersion, currentVersion)) {
@@ -279,7 +283,7 @@ function checkArgs(args) {
   if (args.debug) {
     process.env.LOG_LEVEL = 'verbose';
   } else {
-    process.env.LOG_LEVEL = 'info';
+    process.env.LOG_LEVEL = 'verbose';
   }
   log.level = process.env.LOG_LEVEL;
 }
@@ -298,7 +302,7 @@ function checkRoot() {
 function checkNodeVersion() {
   const semver = require('semver');
   if (!semver.gte(process.version, LOWEST_NODE_VERSION)) {
-    throw new Error(colors.red(`imooc-cli 需要安装 v${LOWEST_NODE_VERSION} 以上版本的 Node.js`));
+    throw new Error(colors.red(`mes-cli 需要安装 v${LOWEST_NODE_VERSION} 以上版本的 Node.js`));
   }
 }
 

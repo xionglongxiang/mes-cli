@@ -2,6 +2,6 @@
 
 const init = require('..');
 
-describe('@imooc-cli/init', () => {
+describe('@mes-cli/init', () => {
     it('needs tests');
 });

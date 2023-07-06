@@ -1,5 +1,5 @@
 {
-  "name": "@imooc-cli/add",
+  "name": "@mes-cli/add",
   "version": "1.0.0",
   "description": "添加代码",
   "author": "liumeng <1808728912@qq.com>",
@@ -13,7 +13,7 @@
     "lib"
   ],
   "dependencies": {
-    "@imooc-cli/utils": "file:../utils",
+    "@mes-cli/utils": "file:../utils",
     "fs-extra": "^10.0.0",
     "npminstall": "^5.3.1",
     "path-exists": "^4.0.0",
@@ -24,12 +24,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/liumeng-02-05/imooc-cli.git"
+    "url": "git+https://github.com/liumeng-02-05/mes-cli.git"
   },
   "scripts": {
     "test": "echo \"Error: run tests from root\" && exit 1"
   },
   "bugs": {
-    "url": "https://github.com/liumeng-02-05/imooc-cli/issues"
+    "url": "https://github.com/liumeng-02-05/mes-cli/issues"
   }
 }

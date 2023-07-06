@@ -2,6 +2,6 @@
 
 const packages = require('..');
 
-describe('@imooc-cli/packages', () => {
+describe('@mes-cli/packages', () => {
     it('needs tests');
 });

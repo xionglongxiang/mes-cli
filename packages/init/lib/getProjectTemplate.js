@@ -1,4 +1,4 @@
-const { request } = require('@imooc-cli/utils');
+const { request } = require('@mes;
 
 module.exports = function() {
   return request({

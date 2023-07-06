@@ -1,11 +1,11 @@
-# `@imooc-cli/packages`
+# `@mes-cli/packages`
 
 > TODO: description
 
 ## Usage
 
 ```
-const packages = require('@imooc-cli/packages');
+const packages = require('@mes-cli/packages');
 
 // TODO: DEMONSTRATE API
 ```

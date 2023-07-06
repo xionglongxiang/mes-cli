@@ -32,7 +32,7 @@ const ADD_CODE_TEMPLATE =[
   {name: 'vue 代码片段',npmName:'demo-code-template',version:'1.0.0',fileName:'code'},
   {name: 'react 代码片段',version:'1.0.0',fileName:'react'}
 ]
-const DEFAULT_CLI_HOME = '.imooc-cli'
+const DEFAULT_CLI_HOME = '.mes-cli'
 const  SHOW_FILE_TYPE = ['.js','.ts','.vue','.jsx','.tsx'] // 展示的文件类型
 
 module.exports = {

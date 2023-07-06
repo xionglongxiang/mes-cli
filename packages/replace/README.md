@@ -1,11 +1,11 @@
-# `@imooc-cli/replace`
+# `@mes-cli/replace`
 
 > TODO: description
 
 ## Usage
 
 ```
-const replace = require('@imooc-cli/replace');
+const replace = require('@mesli/replace');
 
 // TODO: DEMONSTRATE API
 ```
