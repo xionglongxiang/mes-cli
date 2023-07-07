@@ -1,7 +1,12 @@
 {
   "name": "root",
   "private": true,
+  "scripts": {
+    "cb": "rm -rf /usr/local/bin/mes",
+    "cl": "rm -rf /usr/local/lib/node_modules/@mes-cli",
+    "c": "yarn cb;yarn cl"
+  },
   "devDependencies": {
-    "lerna": "^3.20.2"
+    "lerna": "6"
   }
 }

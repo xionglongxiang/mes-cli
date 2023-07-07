@@ -14,6 +14,7 @@ const TEMPLATE_TYPE_CUSTOM = 'custom';
 const DEFAULT_TYPE = TYPE_PROJECT;
 
 async function init(options) {
+  
   try {
     // 设置 targetPath
     let targetPath = process.cwd();
@@ -237,9 +238,11 @@ async function prepare(options) {
   let initType = await getInitType();
   log.verbose('initType', initType);
   let templateList = await getProjectTemplate();
+
   if (!templateList || templateList.length === 0) {
     throw new Error('项目模板列表获取失败');
   }
+  
   let projectName = '';
   let className = '';
   while (!projectName) {
@@ -256,7 +259,18 @@ async function prepare(options) {
     version = await getProjectVersion(version, initType);
     log.verbose('version', version);
   } while (!version);
+
+  console.log('init type', initType)
   if (initType === TYPE_PROJECT) {
+    console.log('templateList', templateList)
+    templateList = [
+      {
+        tag: 'project1',
+      },
+      {
+        tag: 'project2',
+      }
+    ]
     templateList = templateList.filter(item => item.tag.includes('project'));
     return {
       templateList,

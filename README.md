@@ -70,5 +70,5 @@ mes-cli --debug
 调试本地包：
 
 ```bash
-mes-cli init --packagePath /Users/sam/Desktop/mes-cli/packages/init/
+mes-cli init --packagePath /Users/xlx/test/mes-cli/packages/init/
 ```

@@ -156,7 +156,10 @@ function registerCommand() {
 
 async function execCommand({ packagePath, packageName, packageVersion }, extraOptions) {
   let rootFile;
-  console.log('exec commannd')
+  console.log('exec commannd, packagePath', packagePath)
+  console.log('exec commannd, packagePath', packageName)
+  console.log('exec commannd, packagePath', packageVersion)
+  console.log('exec commannd, packagePath', extraOptions)
   try {
     if (packagePath) {
       const execPackage = new Package({
@@ -166,7 +169,10 @@ async function execCommand({ packagePath, packageName, packageVersion }, extraOp
         version: packageVersion,
       });
       rootFile = execPackage.getRootFilePath(true);
+      console.log('execPackage rootFile', rootFile)
+
     } else {
+      console.log('packagePath not exist!')
       const { cliHome } = config;
       const packageDir = `${DEPENDENCIES_PATH}`;
       const targetPath = path.resolve(cliHome, packageDir);
@@ -177,13 +183,17 @@ async function execCommand({ packagePath, packageName, packageVersion }, extraOp
         name: packageName,
         version: packageVersion,
       });
+      console.log('initPackage', initPackage)
       if (await initPackage.exists()) {
+        console.log('initPackage exists')
         await initPackage.update();
+        console.log('initPackage.update')
       } else {
+        console.log('initPackage not exists')
         await initPackage.install();
       }
-      
       rootFile = initPackage.getRootFilePath();
+      console.log('initPackage rootFile', rootFile)
     }
     const _config = Object.assign({}, config, extraOptions, {
       debug: args.debug,
@@ -272,7 +282,6 @@ function createCliConfig() {
 }
 
 function checkInputArgs() {
-  log.verbose('开始校验输入参数');
   const minimist = require('minimist');
   args = minimist(process.argv.slice(2)); // 解析查询参数
   checkArgs(args); // 校验参数
@@ -283,7 +292,7 @@ function checkArgs(args) {
   if (args.debug) {
     process.env.LOG_LEVEL = 'verbose';
   } else {
-    process.env.LOG_LEVEL = 'verbose';
+    process.env.LOG_LEVEL = 'info';
   }
   log.level = process.env.LOG_LEVEL;
 }

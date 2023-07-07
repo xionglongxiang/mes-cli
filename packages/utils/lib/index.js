@@ -2,7 +2,6 @@
 
 const path = require('path');
 const log = require('./log');
-const request = require('./request');
 const npm = require('./npm');
 const inquirer = require('./inquirer');
 const spinner = require('./spinner');
@@ -71,7 +70,6 @@ function formatClassName(name) {
 
 module.exports = {
   log,
-  request,
   npm,
   inquirer,
   spinner,

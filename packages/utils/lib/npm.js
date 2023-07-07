@@ -12,7 +12,6 @@ function getNpmRegistry(isOriginal = false) {
 function getNpmInfo(npm, registry) {
   const register = registry || getNpmRegistry();
   const url = urlJoin(register, npm);
-  console.log('npm, registry: ', url)
 
   return axios.get(url).then(function(response) {
     try {
