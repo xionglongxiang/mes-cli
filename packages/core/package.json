@@ -33,8 +33,8 @@
     "mocha": "^8.1.3"
   },
   "dependencies": {
-    "@mes-cli/add": "file:../add",
-    "@mes-cli/utils": "file:../utils",
+    "@mes-cli/add": "^1.8.0",
+    "@mes-cli/utils": "^1.8.0",
     "colors": "^1.4.0",
     "commander": "^6.1.0",
     "dotenv": "^8.2.0",
