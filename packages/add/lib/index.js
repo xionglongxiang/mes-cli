@@ -355,7 +355,6 @@ async function dependencyInit(targetPath, selectedTemplate) {
 }
 // 依赖对比
 function dependencyDiff(template, origin, type) {
-  console.log(3);
   if (template && origin) {
     const templateList = Object.keys(template);
     const originList = Object.keys(origin);
@@ -365,7 +364,6 @@ function dependencyDiff(template, origin, type) {
     const intersection = templateList.filter(function (val) {
       return originList.indexOf(val) > -1;
     });
-    console.log(templateList, originList, intersection, diff, 12);
     if (intersection && intersection.length > 0) {
       log.error(`两者存在依赖版本冲突，请手动选择版本: ${intersection}`);
       intersection.map((item) => {

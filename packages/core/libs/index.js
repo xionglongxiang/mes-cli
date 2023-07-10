@@ -51,8 +51,6 @@ function registerCommand() {
     .action(async (type, { packagePath, force }) => {
       const packageName = "@mes-cli/create";
       const packageVersion = "1.0.0";
-      console.log(packagePath, packageName, packageVersion);
-
       await execCommand(
         { packagePath, packageName, packageVersion },
         { type, force }
@@ -103,9 +101,7 @@ async function execCommand(
         version: packageVersion,
       });
       rootFile = execPackage.getRootFilePath(true);
-      console.log("execPackage rootFile", rootFile);
     } else {
-      console.log("packagePath not exist!");
       const { cliHome } = config;
       const packageDir = `${DEPENDENCIES_PATH}`;
       const targetPath = path.resolve(cliHome, packageDir);
@@ -117,13 +113,9 @@ async function execCommand(
         version: packageVersion,
       });
       if (await package.exists()) {
-        console.log("update");
         await package.update();
-        console.log("update finish");
       } else {
-        console.log("install");
         await package.install();
-        console.log("install finish");
       }
       rootFile = package.getRootFilePath();
     }
@@ -191,9 +183,9 @@ async function checkGlobalUpdate() {
       colors.yellow(`请手动更新 ${NPM_NAME}，当前版本：${packageConfig.version}，最新版本：${lastVersion}
                 更新命令： npm install -g ${NPM_NAME}`)
     );
+  } else {
+    log.success("当前 mes-cli 是最新版本！");
   }
-
-  log.success("当前 mes-cli 是最新版本！");
 }
 
 function checkEnv() {
