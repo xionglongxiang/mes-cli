@@ -44,14 +44,15 @@ function registerCommand() {
   program.command("add").description("添加内容").action(add);
 
   program
-    .command("init [type]")
+    .command("create [type]")
     .description("项目初始化")
-    .option("--packagePath <packagePath>", "手动指定init包路径")
+    .option("--packagePath <packagePath>", "手动指定 create 包路径")
     .option("--force", "覆盖当前路径文件（谨慎使用）")
     .action(async (type, { packagePath, force }) => {
-      const packageName = "@mes-cli/init";
+      const packageName = "@mes-cli/create";
       const packageVersion = "1.0.0";
       console.log(packagePath, packageName, packageVersion);
+
       await execCommand(
         { packagePath, packageName, packageVersion },
         { type, force }
@@ -93,10 +94,6 @@ async function execCommand(
   extraOptions
 ) {
   let rootFile;
-  console.log("exec commannd, packagePath", packagePath);
-  console.log("exec commannd, packagePath", packageName);
-  console.log("exec commannd, packagePath", packageVersion);
-  console.log("exec commannd, packagePath", extraOptions);
   try {
     if (packagePath) {
       const execPackage = new Package({
@@ -113,30 +110,28 @@ async function execCommand(
       const packageDir = `${DEPENDENCIES_PATH}`;
       const targetPath = path.resolve(cliHome, packageDir);
       const storePath = path.resolve(targetPath, "node_modules");
-      const initPackage = new Package({
+      const package = new Package({
         targetPath,
         storePath,
         name: packageName,
         version: packageVersion,
       });
-      console.log("initPackage", initPackage);
-      if (await initPackage.exists()) {
-        console.log("initPackage exists");
-        await initPackage.update();
-        console.log("initPackage.update");
+      if (await package.exists()) {
+        console.log("update");
+        await package.update();
+        console.log("update finish");
       } else {
-        console.log("initPackage not exists");
-        await initPackage.install();
+        console.log("install");
+        await package.install();
+        console.log("install finish");
       }
-      rootFile = initPackage.getRootFilePath();
-      console.log("initPackage rootFile", rootFile);
+      rootFile = package.getRootFilePath();
     }
     const _config = Object.assign({}, config, extraOptions, {
       debug: args.debug,
     });
     if (fs.existsSync(rootFile)) {
       const code = `require('${rootFile}')(${JSON.stringify(_config)})`;
-      console.log("code ", code);
       const p = exec("node", ["-e", code], { stdio: "inherit" });
       p.on("error", (e) => {
         log.verbose("命令执行失败:", e);

@@ -28,9 +28,7 @@ async function add() {
   targetPath = path.resolve(`${homedir()}/${DEFAULT_CLI_HOME}`, "addTemplate");
   log.verbose("targetPath", targetPath);
   // 1. 选择添加的类型
-  console.log("before addtype! 1");
   let addType = await getAddType();
-  console.log("before addtype! 2");
   log.verbose("addType", addType);
   let addName;
   if (addType === "page") {
