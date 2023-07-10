@@ -1,45 +1,44 @@
-'use strict';
+"use strict";
 
-const path = require('path');
-const log = require('./log');
-const npm = require('./npm');
-const inquirer = require('./inquirer');
-const spinner = require('./spinner');
-const ejs = require('./ejs');
-const terminalLink = require('./terminalLink');
+const path = require("path");
+const log = require("./log");
+const npm = require("./npm");
+const inquirer = require("./inquirer");
+const spinner = require("./spinner");
+const ejs = require("./ejs");
+const terminalLink = require("./terminalLink");
 
-const Package = require('./Package');
-const Git = require('./Git/Git');
-const file = require('./file');
-const locale = require('./Locale/loadLocale');
-const formatPath = require('./formatPath');
+const Package = require("./Package");
+const file = require("./file");
+const locale = require("./Locale/loadLocale");
+const formatPath = require("./formatPath");
 
 function sleep(timeout) {
-  return new Promise((resolve => {
+  return new Promise((resolve) => {
     setTimeout(resolve, timeout);
-  }));
+  });
 }
 
 function exec(command, args, options) {
-  const win32 = process.platform === 'win32';
+  const win32 = process.platform === "win32";
 
-  const cmd = win32 ? 'cmd' : command;
-  const cmdArgs = win32 ? ['/c'].concat(command, args) : args;
+  const cmd = win32 ? "cmd" : command;
+  const cmdArgs = win32 ? ["/c"].concat(command, args) : args;
 
-  return require('child_process').spawn(cmd, cmdArgs, options || {});
+  return require("child_process").spawn(cmd, cmdArgs, options || {});
 }
 
 function firstUpperCase(str) {
-  return str.replace(/^\S/, s => s.toUpperCase());
+  return str.replace(/^\S/, (s) => s.toUpperCase());
 }
 
 function camelTrans(str, isBig) {
   let i = isBig ? 0 : 1;
-  str = str.split('-');
+  str = str.split("-");
   for (; i < str.length; i += 1) {
     str[i] = firstUpperCase(str[i]);
   }
-  return str.join('');
+  return str.join("");
 }
 
 function formatName(name) {
@@ -47,13 +46,13 @@ function formatName(name) {
     name = `${name}`.trim();
     if (name) {
       if (/^[.*_\/\\()&^!@#$%+=?<>~`\s]/.test(name)) {
-        name = name.replace(/^[.*_\/\\()&^!@#$%+=?<>~`\s]+/g, '');
+        name = name.replace(/^[.*_\/\\()&^!@#$%+=?<>~`\s]+/g, "");
       }
       if (/^[0-9]+/.test(name)) {
-        name = name.replace(/^[0-9]+/, '');
+        name = name.replace(/^[0-9]+/, "");
       }
       if (/[.*_\/\\()&^!@#$%+=?<>~`\s]/.test(name)) {
-        name = name.replace(/[.*_\/\\()&^!@#$%+=?<>~`\s]/g, '-');
+        name = name.replace(/[.*_\/\\()&^!@#$%+=?<>~`\s]/g, "-");
       }
       return camelTrans(name, true);
     } else {
@@ -65,7 +64,7 @@ function formatName(name) {
 }
 
 function formatClassName(name) {
-  return require('kebab-case')(name).replace(/^-/, '');
+  return require("kebab-case")(name).replace(/^-/, "");
 }
 
 module.exports = {
@@ -75,7 +74,6 @@ module.exports = {
   spinner,
   ejs,
   Package,
-  Git,
   sleep,
   exec,
   formatName,

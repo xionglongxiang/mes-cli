@@ -1,348 +1,205 @@
-'use strict';
+"use strict";
 
-const fs = require('fs');
-const fse = require('fs-extra');
-const { log, inquirer, spinner, Package, sleep, exec, formatName, formatClassName, ejs } = require('@mes-cli/utils');
-const getProjectTemplate = require('./getProjectTemplate');
+let extractListFromYAML = require("./extract-json");
+const util = require("util");
+const exec_process = util.promisify(require("child_process").exec);
+const chalk = require("chalk");
 
-const COMPONENT_FILE = '.componentrc';
-const TYPE_PROJECT = 'project';
-const TYPE_COMPONENT = 'component';
-const TEMPLATE_TYPE_NORMAL = 'normal';
-const TEMPLATE_TYPE_CUSTOM = 'custom';
+const DEFAULT_CLI_HOME = ".mes-cli";
+const path = require("path");
+const { homedir } = require("os");
+const cacheDir = `${homedir()}/${DEFAULT_CLI_HOME}`;
+
+const fs = require("fs");
+const { log, inquirer, spinner, sleep } = require("@mes-cli/utils");
+
+log.level = "info";
+const COMPONENT_FILE = ".componentrc";
+const TYPE_PROJECT = "project";
+const TYPE_COMPONENT = "component";
 
 const DEFAULT_TYPE = TYPE_PROJECT;
 
-async function init(options) {
-  
+async function init(options = {}) {
   try {
     // 设置 targetPath
     let targetPath = process.cwd();
+
     if (!options.targetPath) {
       options.targetPath = targetPath;
     }
-    log.verbose('init', options);
+
+    log.verbose("init", options);
     // 完成项目初始化的准备和校验工作
-    const result = await prepare(options);
-    if (!result) {
-      log.info('创建项目终止');
-      return;
-    }
-    // 获取项目模板列表
-    const { templateList, project } = result;
-    // 缓存项目模板文件
-    const template = await downloadTemplate(templateList, options);
-    log.verbose('template', template);
-    if (template.type === TEMPLATE_TYPE_NORMAL) {
-      // 安装项目模板
-      await installTemplate(template, project, options);
-    } else if (template.type === TEMPLATE_TYPE_CUSTOM) {
-      await installCustomTemplate(template, project, options);
+
+    let initType = await getInitType();
+    log.verbose("initType", initType);
+
+    if (initType === TYPE_PROJECT) {
+      await installProject();
+    } else if (initType === TYPE_COMPONENT) {
+      await installComponent();
     } else {
-      throw new Error('未知的模板类型！');
+      log.info("创建项目终止");
+      return;
     }
   } catch (e) {
     if (options.debug) {
-      log.error('Error:', e.stack);
+      log.error("Error:", e.stack);
     } else {
-      log.error('Error:', e.message);
+      log.error("Error:", e.message);
     }
   } finally {
     process.exit(0);
   }
 }
 
-async function installCustomTemplate(template, ejsData, options) {
-  const pkgPath = path.resolve(template.sourcePath, 'package.json');
-  const pkg = fse.readJsonSync(pkgPath);
-  const rootFile = path.resolve(template.sourcePath, pkg.main);
-  if (!fs.existsSync(rootFile)) {
-    throw new Error('入口文件不存在！');
-  }
-  log.notice('开始执行自定义模板');
-  const targetPath = options.targetPath;
-  await execCustomTemplate(rootFile, {
-    targetPath,
-    data: ejsData,
-    template,
-  });
-  log.success('自定义模板执行成功');
-}
+async function installProject() {
+  let list = await getProjectList();
+  let selectedProject = await selectProject(list);
+  console.log("选择的项目：", selectedProject);
 
-function execCustomTemplate(rootFile, options) {
-  const code = `require('${rootFile}')(${JSON.stringify(options)})`;
-  return new Promise((resolve, reject) => {
-    const p = exec('node', ['-e', code], { 'stdio': 'inherit' });
-    p.on('error', e => {
-      reject(e);
-    });
-    p.on('exit', c => {
-      resolve(c);
-    });
-  });
-}
+  let projectName = await getProjectName();
 
-async function npminstall(targetPath) {
-  return new Promise((resolve, reject) => {
-    const p = exec('npm', ['install', '--registry=https://registry.npm.taobao.org'], { stdio: 'inherit', cwd: targetPath });
-    p.on('error', e => {
-      reject(e);
+  if (checkFileExistsInDirectory(path.resolve(__dirname, projectName))) {
+    const continueWhenDirNotEmpty = await inquirer({
+      type: "confirm",
+      message: "当前文件夹不为空，是否继续创建项目？",
+      defaultValue: false,
     });
-    p.on('exit', c => {
-      resolve(c);
-    });
-  });
-}
 
-async function execStartCommand(targetPath, startCommand) {
-  return new Promise((resolve, reject) => {
-    const p = exec(startCommand[0], startCommand.slice(1), { stdio: 'inherit', cwd: targetPath });
-    p.on('error', e => {
-      reject(e);
-    });
-    p.on('exit', c => {
-      resolve(c);
-    });
-  });
-}
-
-// 如果是组件项目，则创建组件相关文件
-async function createComponentFile(template, data, dir) {
-  if (template.tag.includes(TYPE_COMPONENT)) {
-    const componentData = {
-      ...data,
-      buildPath: template.buildPath,
-      examplePath: template.examplePath,
-      npmName: template.npmName,
-      npmVersion: template.version,
+    if (!continueWhenDirNotEmpty) {
+      log.info("创建项目终止");
+      return;
     }
-    const componentFile = path.resolve(dir, COMPONENT_FILE);
-    fs.writeFileSync(componentFile, JSON.stringify(componentData));
   }
-}
 
-async function installTemplate(template, ejsData, options) {
-  // 安装模板
-  let spinnerStart = spinner(`正在安装模板...`);
+  let spinnerStart = spinner(`正在安装项目模板...`);
   await sleep(1000);
-  const sourceDir = template.path;
-  const targetDir = options.targetPath;
-  fse.ensureDirSync(sourceDir);
-  fse.ensureDirSync(targetDir);
-  fse.copySync(sourceDir, targetDir);
+  await downloadTemplateToLocal(selectedProject);
+  await copyTemplateToTargetDir(selectedProject, projectName);
+
   spinnerStart.stop(true);
-  log.success('模板安装成功');
-  // ejs 模板渲染
-  const ejsIgnoreFiles = [
-    '**/node_modules/**',
-    '**/.git/**',
-    '**/.vscode/**',
-    '**/.DS_Store',
-  ];
-  if (template.ignore) {
-    ejsIgnoreFiles.push(...template.ignore);
-  }
-  log.verbose('ejsData', ejsData);
-  await ejs(targetDir, ejsData, {
-    ignore: ejsIgnoreFiles,
-  });
-  // 如果是组件，则进行特殊处理
-  await createComponentFile(template, ejsData, targetDir);
-  // 安装依赖文件
-  log.notice('开始安装依赖');
-  await npminstall(targetDir);
-  log.success('依赖安装成功');
-  // 启动代码
-  if (template.startCommand) {
-    log.notice('开始执行启动命令');
-    const startCommand = template.startCommand.split(' ');
-    await execStartCommand(targetDir, startCommand);
-  }
+  log.success("项目初始化成功，您可以按以下提示运行项目：");
+  console.log();
+  console.log("\t" + chalk.green(`cd ${projectName}`));
+  console.log("\t" + chalk.green("yarn"));
+  console.log("\t" + chalk.green("yarn serve"));
+  console.log();
 }
 
-async function downloadTemplate(templateList, options) {
-  // 用户交互选择
-  const templateName = await inquirer({
-    choices: createTemplateChoice(templateList),
-    message: '请选择项目模板',
+async function copyTemplateToTargetDir(selectedProject, projectName) {
+  const projectPath = path.resolve(cacheDir, selectedProject.name);
+  const dest = path.resolve(__dirname, projectName);
+  await copyFolder(projectPath, dest);
+}
+
+function checkFileExistsInDirectory(filePath) {
+  return fs.existsSync(filePath);
+}
+
+async function getProjectName() {
+  return inquirer({
+    type: "string",
+    message: "请输入项目名称",
+    defaultValue: "",
   });
-  log.verbose('template', templateName);
-  const selectedTemplate = templateList.find(item => item.npmName === templateName);
-  log.verbose('selected template', selectedTemplate);
-  const { cliHome } = options;
-  const targetPath = path.resolve(cliHome, 'template');
-  // 基于模板生成 Package 对象
-  const templatePkg = new Package({
-    targetPath,
-    storePath: targetPath,
-    name: selectedTemplate.npmName,
-    version: selectedTemplate.version,
-  });
-  // 如果模板不存在则进行下载
-  if (!await templatePkg.exists()) {
-    let spinnerStart = spinner(`正在下载模板...`);
-    await sleep(1000);
-    await templatePkg.install();
-    spinnerStart.stop(true);
-    log.success('下载模板成功');
-  } else {
-    log.notice('模板已存在', `${selectedTemplate.npmName}@${selectedTemplate.version}`);
-    log.notice('模板路径', `${targetPath}`);
-    let spinnerStart = spinner(`开始更新模板...`);
-    await sleep(1000);
-    await templatePkg.update();
-    spinnerStart.stop(true);
-    log.success('更新模板成功');
-  }
-  // 生成模板路径
-  const templateSourcePath = templatePkg.npmFilePath;
-  const templatePath = path.resolve(templateSourcePath, 'template');
-  log.verbose('template path', templatePath);
-  if (!fs.existsSync(templatePath)) {
-    throw new Error(`[${templateName}]项目模板不存在！`);
-  }
-  const template = {
-    ...selectedTemplate,
-    path: templatePath,
-    sourcePath: templateSourcePath,
+}
+
+async function selectProject(projects) {
+  const choices = projects.map((project) => ({
+    name: project.name,
+    value: project,
+  }));
+
+  const questions = {
+    type: "list",
+    name: "selectedProject",
+    message: "请选择一个项目：",
+    choices: choices,
   };
-  return template;
+
+  let selectedProject = await inquirer(questions);
+  return selectedProject;
 }
+async function downloadTemplateToLocal(project) {
+  let name = project.name;
+  let url = project.url;
+  const projectCacheDir = path.resolve(cacheDir, name);
+  console.log("projectCacheDir", projectCacheDir);
+  await exec_process(`rm -rf ${projectCacheDir}`);
 
-async function prepare(options) {
-  let fileList = fs.readdirSync(process.cwd());
-  fileList = fileList.filter(file => ['node_modules', '.git', '.DS_Store'].indexOf(file) < 0);
-  log.verbose('fileList', fileList);
-  let continueWhenDirNotEmpty = true;
-  if (fileList && fileList.length > 0) {
-    continueWhenDirNotEmpty = await inquirer({
-      type: 'confirm',
-      message: '当前文件夹不为空，是否继续创建项目？',
-      defaultValue: false,
-    });
-  }
-  if (!continueWhenDirNotEmpty) {
-    return;
-  }
-  if (options.force) {
-    const targetDir = options.targetPath;
-    const confirmEmptyDir = await inquirer({
-      type: 'confirm',
-      message: '是否确认清空当下目录下的文件',
-      defaultValue: false,
-    });
-    if (confirmEmptyDir) {
-      fse.emptyDirSync(targetDir);
-    }
-  }
-  let initType = await getInitType();
-  log.verbose('initType', initType);
-  let templateList = await getProjectTemplate();
+  try {
+    console.log(`git clone ${url} ${projectCacheDir}`);
+    await exec_process(`git clone ${url} ${projectCacheDir}`);
 
-  if (!templateList || templateList.length === 0) {
-    throw new Error('项目模板列表获取失败');
-  }
-  
-  let projectName = '';
-  let className = '';
-  while (!projectName) {
-    projectName = await getProjectName(initType);
-    if (projectName) {
-      projectName = formatName(projectName);
-      className = formatClassName(projectName);
+    if (!fs.existsSync(projectCacheDir)) {
+      throw new Error("执行 git clone 命令时出错");
     }
-    log.verbose('name', projectName);
-    log.verbose('className', className);
-  }
-  let version = '1.0.0';
-  do {
-    version = await getProjectVersion(version, initType);
-    log.verbose('version', version);
-  } while (!version);
-
-  console.log('init type', initType)
-  if (initType === TYPE_PROJECT) {
-    console.log('templateList', templateList)
-    templateList = [
-      {
-        tag: 'project1',
-      },
-      {
-        tag: 'project2',
-      }
-    ]
-    templateList = templateList.filter(item => item.tag.includes('project'));
-    return {
-      templateList,
-      project: {
-        name: projectName,
-        className,
-        version,
-      },
-    };
-  } else {
-    templateList = templateList.filter(item => item.tag.includes('component'));
-    let description = '';
-    while (!description) {
-      description = await getComponentDescription();
-      log.verbose('description', description);
-    }
-    return {
-      templateList,
-      project: {
-        name: projectName,
-        className,
-        version,
-        description,
-      },
-    };
+    console.log("文件下载成功");
+  } catch {
+    console.error("执行 git clone 命令时出错:", error);
   }
 }
 
-function getComponentDescription() {
-  return inquirer({
-    type: 'string',
-    message: '请输入组件的描述信息',
-    defaultValue: '',
-  });
+async function getProjectList() {
+  const filePath = "../template/project.yaml";
+  const extractedList = extractListFromYAML(filePath);
+  return extractedList;
 }
 
-function getProjectVersion(defaultVersion, initType) {
-  return inquirer({
-    type: 'string',
-    message: initType === TYPE_PROJECT ? '请输入项目版本号' : '请输入组件版本号',
-    defaultValue: defaultVersion,
-  });
+async function getComponentList() {
+  const filePath = "../template/component.yaml";
+  const extractedList = extractListFromYAML(filePath);
+  return extractedList;
 }
 
 function getInitType() {
+  console.log("get init type");
   return inquirer({
-    type: 'list',
-    choices: [{
-      name: '项目',
-      value: TYPE_PROJECT,
-    }, {
-      name: '组件',
-      value: TYPE_COMPONENT,
-    }],
-    message: '请选择初始化类型',
+    type: "list",
+    choices: [
+      {
+        name: "项目",
+        value: TYPE_PROJECT,
+      },
+      {
+        name: "组件",
+        value: TYPE_COMPONENT,
+      },
+    ],
+    message: "请选择初始化类型",
     defaultValue: DEFAULT_TYPE,
   });
 }
 
-function getProjectName(initType) {
-  return inquirer({
-    type: 'string',
-    message: initType === TYPE_PROJECT ? '请输入项目名称' : '请输入组件名称',
-    defaultValue: '',
-  });
-}
+async function copyFolder(sourceDir, targetDir) {
+  // 确保目标文件夹存在，如果不存在则创建
+  if (!fs.existsSync(targetDir)) {
+    fs.mkdirSync(targetDir);
+  }
 
-function createTemplateChoice(list) {
-  return list.map(item => ({
-    value: item.npmName,
-    name: item.name,
-  }));
+  // 获取源文件夹中的所有文件和子文件夹
+  const files = await fs.promises.readdir(sourceDir);
+
+  // 遍历所有文件和子文件夹
+  for (const file of files) {
+    // 跳过 .git 文件夹
+    if (file === ".git") {
+      continue;
+    }
+
+    const sourcePath = path.join(sourceDir, file);
+    const targetPath = path.join(targetDir, file);
+
+    // 如果是子文件夹，则递归复制
+    if ((await fs.promises.stat(sourcePath)).isDirectory()) {
+      await copyFolder(sourcePath, targetPath);
+    } else {
+      // 如果是文件，则直接复制
+      await fs.promises.copyFile(sourcePath, targetPath);
+    }
+  }
 }
 
 module.exports = init;
