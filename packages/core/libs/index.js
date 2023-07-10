@@ -50,9 +50,8 @@ function registerCommand() {
     .option("--force", "覆盖当前路径文件（谨慎使用）")
     .action(async (type, { packagePath, force }) => {
       const packageName = "@mes-cli/create";
-      const packageVersion = "1.0.0";
       await execCommand(
-        { packagePath, packageName, packageVersion },
+        { packagePath, packageName, packageVersion: packageConfig.version },
         { type, force }
       );
     });
@@ -112,9 +111,12 @@ async function execCommand(
         name: packageName,
         version: packageVersion,
       });
+
       if (await package.exists()) {
+        console.log("package.exists");
         await package.update();
       } else {
+        console.log("package.not exists");
         await package.install();
       }
       rootFile = package.getRootFilePath();
