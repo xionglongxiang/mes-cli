@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "cb": "rm -rf /usr/local/bin/mes",
-    "cl": "rm -rf /usr/local/lib/node_modules/@mes-cli",
+    "cl": "rm -rf /usr/local/lib/node_modules/@mes-cli"
   },
   "devDependencies": {
     "lerna": "6"
