@@ -1,6 +1,6 @@
 {
   "name": "@mes-cli/add",
-  "version": "1.9.3",
+  "version": "1.10.0",
   "description": "添加代码",
   "author": "liumeng <1808728912@qq.com>",
   "license": "ISC",
@@ -13,7 +13,7 @@
     "lib"
   ],
   "dependencies": {
-    "@mes-cli/utils": "^1.9.3",
+    "@mes-cli/utils": "^1.10.0",
     "fs-extra": "^10.0.0",
     "npminstall": "^5.3.1",
     "path-exists": "^4.0.0",

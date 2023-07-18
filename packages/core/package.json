@@ -1,6 +1,6 @@
 {
   "name": "mes-cli",
-  "version": "1.9.3",
+  "version": "1.10.0",
   "description": "mes-cli core",
   "author": "sam <247765564@qq.com>",
   "homepage": "https://github.com/sam9831/mes-cli#readme",
@@ -33,8 +33,8 @@
     "mocha": "^8.1.3"
   },
   "dependencies": {
-    "@mes-cli/add": "^1.9.3",
-    "@mes-cli/utils": "^1.9.3",
+    "@mes-cli/add": "^1.10.0",
+    "@mes-cli/utils": "^1.10.0",
     "colors": "^1.4.0",
     "commander": "^6.1.0",
     "dotenv": "^8.2.0",
