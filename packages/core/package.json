@@ -1,5 +1,5 @@
 {
-  "name": "@mes-cli/core",
+  "name": "mes-cli",
   "version": "1.9.3",
   "description": "mes-cli core",
   "author": "sam <247765564@qq.com>",

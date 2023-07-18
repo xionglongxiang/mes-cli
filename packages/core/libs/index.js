@@ -113,10 +113,8 @@ async function execCommand(
       });
 
       if (await package.exists()) {
-        console.log("package.exists");
         await package.update();
       } else {
-        console.log("package.not exists");
         await package.install();
       }
       rootFile = package.getRootFilePath();

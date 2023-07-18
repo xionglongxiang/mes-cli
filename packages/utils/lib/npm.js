@@ -27,11 +27,7 @@ function getNpmInfo(npm, registry) {
 
 // 获取某个 npm 的最新版本号
 function getLatestVersion(npm, registry) {
-  console.log("npm", npm);
-  console.log("registry", registry);
   return getNpmInfo(npm, registry).then(function (data) {
-    console.log("data", data);
-
     if (!data["dist-tags"] || !data["dist-tags"].latest) {
       console.error("没有 latest 版本号", data);
       return Promise.reject(new Error("Error: 没有 latest 版本号"));
