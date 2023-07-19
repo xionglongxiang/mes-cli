@@ -2,7 +2,7 @@
   "name": "@mes-cli/add",
   "version": "1.10.0",
   "description": "添加代码",
-  "author": "liumeng <1808728912@qq.com>",
+  "author": "xionglongxiang <xionglongxiang@126.com>",
   "license": "ISC",
   "main": "lib/index.js",
   "directories": {
@@ -17,19 +17,21 @@
     "fs-extra": "^10.0.0",
     "npminstall": "^5.3.1",
     "path-exists": "^4.0.0",
-    "pkg-up": "^3.1.0"
+    "pkg-up": "^3.1.0",
+    "core-js": "^3.6.5",
+    "vue": "^2.6.11"
   },
   "publishConfig": {
     "access": "public"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/liumeng-02-05/mes-cli.git"
+    "url": "git+https://github.com/xionglongxiang-02-05/mes-cli.git"
   },
   "scripts": {
     "test": "echo \"Error: run tests from root\" && exit 1"
   },
   "bugs": {
-    "url": "https://github.com/liumeng-02-05/mes-cli/issues"
+    "url": "https://github.com/xionglongxiang-02-05/mes-cli/issues"
   }
 }

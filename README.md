@@ -17,13 +17,13 @@ npm install -g @mes-cli/core
 项目/组件初始化
 
 ```bash
-mes-cli init 
+mes create 
 ```
 
 强制清空当前文件夹
 
 ```bash
-mes-cli init --force
+mes create --force
 ```
 
 ### 发布项目
@@ -70,5 +70,5 @@ mes-cli --debug
 调试本地包：
 
 ```bash
-mes-cli init --packagePath /Users/xlx/test/mes-cli/packages/init/
+mes create --packagePath /Users/xlx/test/mes-cli/packages/create/
 ```

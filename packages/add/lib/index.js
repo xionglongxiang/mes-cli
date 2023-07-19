@@ -47,7 +47,7 @@ async function add() {
     );
     // 下载对应的模版文件
     // 下载的模版需要安装到缓存中，安装时从本地缓存文件中查找（更新/安装）
-    // 指定存放模版文件的目录为 (/Users/liumeng/.mes-cli/addTemplate)
+    // 指定存放模版文件的目录为 (/Users/xionglongxiang/.mes-cli/addTemplate)
     // 判断缓存文件是否存在（更新/安装的逻辑判断）
     await updateOrInstall(targetPath, selectedTemplate);
     // 3. 读取缓存项目中的package.json和当前项目中的package.json信息进行对比
@@ -61,8 +61,6 @@ async function add() {
       fse.ensureDirSync(`${rootDir}/${addName}`);
     }
     await copyFile(targetPath, selectedTemplate, rootDir, addName);
-    // 5. 安装项目依赖
-    await dependencyInit(targetPath, selectedTemplate);
   } else {
     // 代码
     // 选择模版
@@ -94,7 +92,7 @@ async function add() {
       // 拷贝模版内容到指定文件
       await copyCodeToComponent(targetPath, rootDir, selectedTemplate);
       // 依赖安装
-      await dependencyInit(targetPath, selectedTemplate);
+      // await dependencyInit(targetPath, selectedTemplate);
     }
   }
 }
@@ -328,99 +326,7 @@ function readCacheFile(path, templateName) {
   });
   return fileList;
 }
-// 依赖安装
-async function dependencyInit(targetPath, selectedTemplate) {
-  const rootDir = process.cwd();
-  const targetPathPkgJson = require(await pkgUp({
-    cwd: `${cacheFilePath(targetPath, selectedTemplate)}/template`,
-  }));
-  const rootDirPkgJson = require(await pkgUp());
-  // 依赖项对比
-  const diffDependencies = await dependencyDiff(
-    targetPathPkgJson.dependencies,
-    rootDirPkgJson.dependencies,
-    "dependencies"
-  );
-  log.verbose("依赖项 dependencies 对比", diffDependencies);
-  if (diffDependencies && diffDependencies.length > 0) {
-    // 安装 dependencies 依赖
-    await writeDependency(diffDependencies, await pkgUp());
-    log.success("当前项目中dependencies已经是最新依赖");
-    await addNpminstall(rootDir);
-    log.success("下载依赖成功");
-  } else {
-    log.warn("请手动安装依赖");
-    return;
-  }
-}
-// 依赖对比
-function dependencyDiff(template, origin, type) {
-  if (template && origin) {
-    const templateList = Object.keys(template);
-    const originList = Object.keys(origin);
-    const diff = templateList.filter(function (val) {
-      return originList.indexOf(val) === -1;
-    });
-    const intersection = templateList.filter(function (val) {
-      return originList.indexOf(val) > -1;
-    });
-    if (intersection && intersection.length > 0) {
-      log.error(`两者存在依赖版本冲突，请手动选择版本: ${intersection}`);
-      intersection.map((item) => {
-        log.warn(
-          `${type}: 模版项目 ${item} 版本号：${template[item]} ==> 当前项目 ${item} 版本号：${origin[item]}`
-        );
-      });
-      return;
-    } else {
-      const newDiff = [];
-      diff.map((item) => {
-        const obj = {};
-        obj[item] = template[item];
-        newDiff.push(obj);
-      });
-      return newDiff;
-    }
-  } else if (template) {
-    return objToArr(template);
-  } else {
-    return;
-  }
-}
-// 将依赖写入package.json文件
-async function writeDependency(dependencyList, targetPath) {
-  const data = JSON.parse(fs.readFileSync(targetPath, "utf-8"));
-  dependencyList.map((item) => {
-    data.dependencies[Object.keys(item)[0]] = Object.values(item)[0];
-  });
-  fs.writeFileSync(targetPath, JSON.stringify(data), "utf-8");
-}
-// 安装依赖
-async function addNpminstall(targetPath) {
-  return new Promise((resolve, reject) => {
-    const p = exec(
-      "npm",
-      ["install", "--registry=https://registry.npm.taobao.org"],
-      { stdio: "inherit", cwd: targetPath }
-    );
-    p.on("error", (e) => {
-      reject(e);
-    });
-    p.on("exit", (c) => {
-      resolve(c);
-    });
-  });
-}
-// 对象转数组
-function objToArr(object) {
-  const arr = [];
-  for (let key in object) {
-    const obj = {};
-    obj[key] = object[key];
-    arr.push(obj);
-  }
-  return arr;
-}
+
 // 拷贝文件筛选
 async function copyFile(targetPath, selectedTemplate, rootDir, addName) {
   const originFile = `${cacheFilePath(targetPath, selectedTemplate)}/${

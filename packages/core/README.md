@@ -17,7 +17,7 @@ yarn global add @mes/core
 创建项目
 
 ```bash
-mes-cli init 
+mes create 
 ```
 
 发布项目
@@ -43,5 +43,5 @@ mes-cli --debug
 指定本地包：
 
 ```bash
-mes-cli init --packagePath /Users/sam/Desktop/mes-cli/packages/init/
+mes create --packagePath /Users/sam/Desktop/mes-cli/packages/create/
 ```

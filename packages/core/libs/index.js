@@ -44,21 +44,21 @@ function registerCommand() {
   program.command("add").description("添加内容").action(add);
 
   program
-    .command("create [type]")
-    .description("项目初始化")
+    .command("create")
+    .description("根据模板创建项目")
     .option("--packagePath <packagePath>", "手动指定 create 包路径")
     .option("--force", "覆盖当前路径文件（谨慎使用）")
-    .action(async (type, { packagePath, force }) => {
+    .action(async ({ packagePath, force }) => {
       const packageName = "@mes-cli/create";
       await execCommand(
         { packagePath, packageName, packageVersion: packageConfig.version },
-        { type, force }
+        { force }
       );
     });
 
   program
     .command("clean")
-    .description("清空缓存文件 2")
+    .description("清空缓存文件")
     .option("-a, --all", "清空全部")
     .option("-d, --dep", "清空依赖文件")
     .action((options) => {
