@@ -163,11 +163,12 @@ async function execCommand(
         version: packageVersion,
       });
 
-      if (await package.exists()) {
-        await package.update();
-      } else {
+      if (!(await package.exists())) {
         await package.install();
+      } else if (await package.exists()) {
+        await package.update();
       }
+
       rootFile = package.getRootFilePath();
     }
     const _config = Object.assign({}, config, extraOptions, {
