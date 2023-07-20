@@ -1,6 +1,6 @@
 {
   "name": "@mes-cli/add",
-  "version": "1.10.0",
+  "version": "1.11.0",
   "description": "添加代码",
   "author": "xionglongxiang <xionglongxiang@126.com>",
   "license": "ISC",
@@ -13,12 +13,12 @@
     "lib"
   ],
   "dependencies": {
-    "@mes-cli/utils": "^1.10.0",
+    "@mes-cli/utils": "^1.11.0",
+    "core-js": "^3.6.5",
     "fs-extra": "^10.0.0",
     "npminstall": "^5.3.1",
     "path-exists": "^4.0.0",
     "pkg-up": "^3.1.0",
-    "core-js": "^3.6.5",
     "vue": "^2.6.11"
   },
   "publishConfig": {
