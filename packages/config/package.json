@@ -1,6 +1,6 @@
 {
   "name": "@mes-cli/config",
-  "version": "1.11.0",
+  "version": "1.12.2",
   "description": "mes-cli config",
   "author": "xionglongxiang <xionglongxiang@126.com>",
   "homepage": "https://github.com/xionglongxiang/mes-cli#readme",
@@ -28,7 +28,7 @@
     "url": "https://github.com/xionglongxiang/mes-cli/issues"
   },
   "dependencies": {
-    "@mes-cli/utils": "^1.11.0",
+    "@mes-cli/utils": "^1.12.2",
     "fs-extra": "^9.0.1",
     "yaml": "^2.3.1"
   },
