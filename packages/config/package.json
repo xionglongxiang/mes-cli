@@ -1,7 +1,7 @@
 {
-  "name": "@mes-cli/create",
+  "name": "@mes-cli/config",
   "version": "1.10.0",
-  "description": "mes-cli create",
+  "description": "mes-cli config",
   "author": "xionglongxiang <xionglongxiang@126.com>",
   "homepage": "https://github.com/xionglongxiang/mes-cli#readme",
   "license": "ISC",
