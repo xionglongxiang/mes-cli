@@ -1,19 +1,24 @@
-const ADD_PAGES = "page";
+const ADD_PAGE = "page";
+const ADD_COMPONENT = "component";
 const ADD_CODE = "code";
 
-const DEFAULT_TYPE = ADD_PAGES;
+const DEFAULT_TYPE = ADD_PAGE;
 // 添加的类型
 const ADD_CONTENT = [
   {
     name: "页面",
-    value: ADD_PAGES,
+    value: ADD_PAGE,
+  },
+  {
+    name: "组件",
+    value: ADD_COMPONENT,
   },
   {
     name: "代码片段",
     value: ADD_CODE,
   },
 ];
-const ADD_PAGES_TEMPLATE = [
+const ADD_PAGE_TEMPLATE = [
   {
     name: "Vue2 文件模版",
     npmName: "add-demo-template",
@@ -32,6 +37,16 @@ const ADD_PAGES_TEMPLATE = [
     ignore: ["examples", "preview"],
   },
 ];
+const ADD_COMPONENT_TEMPLATE = [
+  {
+    name: "vue 代码片段",
+    npmName: "demo-code-template",
+    version: "1.0.0",
+    fileName: "code",
+  },
+  { name: "react 代码片段", version: "1.0.0", fileName: "react" },
+];
+
 const ADD_CODE_TEMPLATE = [
   {
     name: "vue 代码片段",
@@ -47,7 +62,8 @@ const SHOW_FILE_TYPE = [".js", ".ts", ".vue", ".jsx", ".tsx"]; // 展示的文�
 module.exports = {
   ADD_CONTENT,
   DEFAULT_TYPE,
-  ADD_PAGES_TEMPLATE,
+  ADD_PAGE_TEMPLATE,
+  ADD_COMPONENT_TEMPLATE,
   DEFAULT_CLI_HOME,
   ADD_CODE_TEMPLATE,
   SHOW_FILE_TYPE,

@@ -43,6 +43,45 @@ function registerCommand() {
 
   program.command("add").description("添加内容").action(add);
 
+  // 定义 'config' 命令
+  program
+    .command("config") // 不需要参数，因为这是父命令
+    .description("配置您的个性化信息或获取已设置的内容")
+    .action(() => {
+      // 在此处处理 'mes config' 命令的逻辑
+      console.log("请使用 'mes config set <key> <value>' 来设置个性化信息。");
+      console.log("请使用 'mes config get <key>' 来获取已设置的内容。");
+    });
+
+  // 定义 'mes config set' 子命令
+  program
+    .command("config set <key> <value>") // 定义子命令 'config set'，使用 '<key> <value>' 作为参数
+    .description("设置个性化信息") // 子命令的描述
+    .action(async (key, value) => {
+      // 在此处处理设置个性化信息的逻辑
+
+      console.log(`设置 ${key} 为 ${value}`);
+      // 例如，您可以在此处调用相应的函数来设置个性化信息
+      const packageName = "@mes-cli/config";
+      await execCommand({
+        packageName,
+        packageVersion: packageConfig.version,
+      });
+    });
+
+  // 定义 'mes config get' 子命令
+  program
+    .command("config get <key>") // 定义子命令 'config get'，使用 '<key>' 作为参数
+    .description("获取已设置的内容") // 子命令的描述
+    .option("--packagePath <packagePath>", "手动指定 create 包路径")
+    .action(async ({ packagePath, key }) => {
+      const packageName = "@mes-cli/create";
+      await execCommand(
+        { packagePath, packageName, packageVersion: packageConfig.version },
+        { key }
+      );
+    });
+
   program
     .command("create")
     .description("根据模板创建项目")

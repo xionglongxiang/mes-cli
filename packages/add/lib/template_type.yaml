@@ -1,0 +1,17 @@
+MES_SUB_APP_PAGE:
+  name: 'MES子应用·页面'
+  page-vue-3:
+    name: 'MES子应用·页面·vue3'
+    url: 'https://github.com/xionglongxiang/template'
+  page-vue-2:
+    name: 'MES子应用·页面·vue2'
+    url: 'https://github.com/xionglongxiang/template'
+
+MES_SUB_APP_COMPONENT:
+  name: 'MES子应用·全局组件'
+  component-vue-3-normal:
+    name: 'MES子应用·全局组件·通用型'
+    url: 'https://github.com/xionglongxiang/template'
+  component-vue-3-dialog:
+    name: 'MES子应用·全局组件·弹框型'
+    url: 'https://github.com/xionglongxiang/template'

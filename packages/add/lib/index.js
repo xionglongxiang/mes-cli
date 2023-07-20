@@ -1,355 +1,323 @@
 "use strict";
 const fse = require("fs-extra");
 const fs = require("fs");
-const pkgUp = require("pkg-up");
 const path = require("path");
 const pathExists = require("path-exists").sync;
-const npminstall = require("npminstall");
+let extractTypeFromYAML = require("./extract-json");
+const ejs = require("ejs");
+
+const util = require("util");
+const exec_process = util.promisify(require("child_process").exec);
 
 const { homedir } = require("os");
-const {
-  ADD_CONTENT,
-  DEFAULT_TYPE,
-  ADD_PAGES_TEMPLATE,
-  DEFAULT_CLI_HOME,
-  ADD_CODE_TEMPLATE,
-  SHOW_FILE_TYPE,
-} = require("./const");
-const { inquirer, log, npm, spinner, exec, sleep } = require("@mes-cli/utils");
+const { DEFAULT_CLI_HOME, SHOW_FILE_TYPE } = require("./const");
+const { inquirer, log, npm, spinner, sleep } = require("@mes-cli/utils");
 
-const useOriginNpm = false;
+const templateTypeFilePath = path.resolve(__dirname, "./template_type.yaml");
+const TEMPLATE_TYPES = extractTypeFromYAML(templateTypeFilePath);
+
+const DEFAULT_TYPE = Object.keys(TEMPLATE_TYPES)[0];
+
+const cacheDir = `${homedir()}/${DEFAULT_CLI_HOME}`;
+
 async function add() {
   log.level = process.env.LOG_LEVEL; // 进入add后log.level的层级还是info
-  let targetPath; // 缓存文件地址
-  let rootDir = process.cwd(); // 目标目录
-  let addTemplate; // 模版信息
-  // 生成缓存文件目录
-  // process.env.CLI_HOME 没有获取到，这里直接写
-  targetPath = path.resolve(`${homedir()}/${DEFAULT_CLI_HOME}`, "addTemplate");
-  log.verbose("targetPath", targetPath);
+  let workDir = process.cwd(); // 目标目录
+
+  log.verbose("cacheDir", cacheDir);
   // 1. 选择添加的类型
-  let addType = await getAddType();
-  log.verbose("addType", addType);
-  let addName;
-  if (addType === "page") {
-    addName = await getAddName();
-    log.verbose("addName", addName);
-    // 2. 选择添加模版
-    addTemplate = await getAddTemplate(ADD_PAGES_TEMPLATE);
-    log.verbose("addTemplate", addTemplate);
-    const selectedTemplate = ADD_PAGES_TEMPLATE.find(
-      (item) => item.name === addTemplate
-    );
-    log.verbose("selectedTemplate", selectedTemplate);
-    // 获取最新版本号
-    selectedTemplate.templateVersion = await npm.getLatestVersion(
-      selectedTemplate.npmName
-    );
-    // 下载对应的模版文件
-    // 下载的模版需要安装到缓存中，安装时从本地缓存文件中查找（更新/安装）
-    // 指定存放模版文件的目录为 (/Users/xionglongxiang/.mes-cli/addTemplate)
-    // 判断缓存文件是否存在（更新/安装的逻辑判断）
-    await updateOrInstall(targetPath, selectedTemplate);
-    // 3. 读取缓存项目中的package.json和当前项目中的package.json信息进行对比
-    // 读取缓存项目中的package.json和当前项目中的package.json信息进行对比
-    // 4.获取当前目录，拷贝内容到当前目录下
-    fse.ensureDirSync(targetPath);
-    if (pathExists(`${rootDir}/${addName}`)) {
-      log.error(`当前目录下已经存在 ${addName} 文件`);
-      return;
-    } else {
-      fse.ensureDirSync(`${rootDir}/${addName}`);
-    }
-    await copyFile(targetPath, selectedTemplate, rootDir, addName);
+  let templateType = await inquireTemplateType();
+  log.verbose("templateType", templateType);
+  let inputProjectName;
+
+  if (templateType === "MES_SUB_APP_PAGE") {
+    // 选择添加模版
+    let selectedTemplate = await inquireTemplate(templateType);
+
+    log.verbose("已选模板：", selectedTemplate);
+
+    inputProjectName = await inquireAddName();
+
+    log.verbose("添加页面：", inputProjectName);
+    fse.ensureDirSync(cacheDir);
+
+    let spinnerStart = spinner(`正在下载项目模板...`);
+    await sleep(500);
+    await downloadTemplateToLocal(selectedTemplate);
+    spinnerStart.stop(true);
+    spinnerStart = spinner(`正在复制项目模板到当前项目...`);
+    await copyTemplateToTargetDir(selectedTemplate, inputProjectName);
+    spinnerStart.stop(true);
+
+    let PageTitle = await inquireTitle();
+    spinnerStart = spinner(`正在填充模板字段...`);
+    await formatTemplate({ PageTitle, PageName: inputProjectName });
+    spinnerStart.stop(true);
+
+    spinnerStart = spinner(`正在添加路由...`);
+    await addRouter(inputProjectName);
+    spinnerStart.stop(true);
+
+    log.success("页面添加成功！");
+    log.success("route 添加成功！您可以检查 router 文件是否添加正确！");
   } else {
-    // 代码
-    // 选择模版
-    // 读取目标信息文件内容（展示刷选后的文件列表）
-    // 安装/更新模版
-    // 拷贝文件
-    // 安装依赖
-    addTemplate = await getAddTemplate(ADD_CODE_TEMPLATE);
-    log.verbose("addTemplate", addTemplate);
-    const selectedTemplate = ADD_CODE_TEMPLATE.find(
-      (item) => item.name === addTemplate
-    );
-    log.verbose("selectedTemplate", selectedTemplate);
-    // 获取最新版本号
-    selectedTemplate.templateVersion = await npm.getLatestVersion(
-      selectedTemplate.npmName
-    );
-    log.verbose("selectedTemplate", selectedTemplate);
-    // 更新/安装依赖
-    await updateOrInstall(targetPath, selectedTemplate);
-    // 展示文件
-    const showFileList = await showFilterFile(rootDir);
-    log.verbose("showFileList", showFileList);
-    const addFileName = await showAddFile(showFileList);
-    log.verbose("addFileName", addFileName);
-    if (addFileName) {
-      // 选择添加内容的行数
-      await fileWrite(rootDir, addFileName, selectedTemplate);
-      // 拷贝模版内容到指定文件
-      await copyCodeToComponent(targetPath, rootDir, selectedTemplate);
-      // 依赖安装
-      // await dependencyInit(targetPath, selectedTemplate);
-    }
   }
 }
-// 拷贝代码片段模版到指定位置
-function copyCodeToComponent(targetPath, rootDir, selectedTemplate) {
-  if (pathExists(`${rootDir}/components/${selectedTemplate.fileName}`)) {
-    log.error(`当前目录下已经存在 ${selectedTemplate.fileName} 文件`);
-    return;
-  } else {
-    // fse.copySync(`${cacheFilePath(targetPath,selectedTemplate)}/template`,`${rootDir}/components/${selectedTemplate.fileName}`);
-    fse.copySync(
-      `${cacheFilePath(targetPath, selectedTemplate)}/template`,
-      `${rootDir}/components/`
-    );
-  }
-}
-// 向指定文件中写入信息
-async function fileWrite(rootDir, addFileName, selectedTemplate) {
-  const fileDir = `${rootDir}/${addFileName}`;
-  const fileContent = fs.readFileSync(fileDir, "utf-8");
-  const fileContentArray = fileContent.split("\n");
-  // 选择需要添加的文件和行数
-  const addPostionIndex = await addCodePosition(fileContentArray);
-  log.verbose("addPostionIndex", addPostionIndex);
-  let lastImport = 0; // import最后出现的位置
-  fileContentArray.map((item, index) => {
-    if (item.indexOf("import") != -1 && item.indexOf("@import") == -1) {
-      lastImport = index;
-    }
-  });
-  const insertContent = insertStr(
-    fileContent,
-    fileContent.indexOf(fileContentArray[addPostionIndex - 1]) +
-      fileContentArray[addPostionIndex - 1].length,
-    "\n" + `<${selectedTemplate.fileName}/>`
-  );
-  // 在指定位置模版插入内容
-  const insertContent2 = insertStr(
-    insertContent,
-    insertContent.indexOf(fileContentArray[lastImport]) +
-      fileContentArray[lastImport].length,
-    "\n" +
-      `import ${titleCase(selectedTemplate.fileName)} from './components/${
-        selectedTemplate.fileName
-      }'`
-  );
-  fs.writeFileSync(fileDir, insertContent2, "utf-8");
-}
-// 向字符串制定位置添加内容
-function insertStr(str1, n, str2) {
-  var s1 = "";
-  var s2 = "";
-  if (str1.length < n) {
-    return str1 + str2;
-  } else {
-    s1 = str1.substring(0, n);
-    s2 = str1.substring(n, str1.length);
-    return s1 + str2 + s2;
-  }
-}
+
 // 首字母大写
-
-function titleCase(str) {
-  const newStr = str.slice(0, 1).toUpperCase() + str.slice(1).toLowerCase();
-  return newStr;
+function camelToKebab(str) {
+  return str.replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase();
 }
-// 选择添加代码的位置
-function addCodePosition(fileContentArray) {
-  return inquirer({
-    type: "input",
-    message: "请输入添加的位置",
-    validate: function (v) {
-      // 插入的位置范围是从1 到 总长度
-      var done = this.async();
-      setTimeout(function () {
-        if (v * 1 === 0) {
-          done("添加的代码位置不能从0开始");
-        }
-        if (v * 1 > fileContentArray.length + 1 && v * 1 != 0) {
-          done("添加的代码位置不能超过文件代码总长度 ");
-        }
-        done(null, true);
-      }, 0);
+
+function addRouter(projectName) {
+  let kebab = camelToKebab(projectName);
+
+  const newRouteConfig = `
+  {
+    path: '/${kebab}',
+    name: '${projectName}',
+    component: () => import('../views/${kebab}/index.vue')
     },
-  });
-}
-// 过滤显示的文件名
-async function showFilterFile(targetPath) {
-  const fileContent = [];
-  const files = await fse.readdirSync(targetPath);
-  files.map((item) => {
-    for (let j = 0; j < SHOW_FILE_TYPE.length; j++) {
-      if (
-        item.indexOf(SHOW_FILE_TYPE[j]) != -1 &&
-        item.indexOf(".json") == -1
-      ) {
-        const obj = {};
-        obj.name = item;
-        obj.value = item;
-        fileContent.push(obj);
-      }
+  `;
+
+  // 生成router/index.ts的绝对路径
+  const routerFilePath = path.resolve(__dirname, "router/index.ts");
+
+  // 读取现有的router/index.ts文件内容
+  fs.readFile(routerFilePath, "utf8", (err, data) => {
+    if (err) {
+      console.error("Error reading file:", err);
+      return;
     }
-  });
-  return fileContent;
-}
-// 选择添加的文件
-function showAddFile(data) {
-  return inquirer({
-    type: "list",
-    choices: data,
-    pageSize: data.length,
-    Loop: false,
-    message: "请选择添加的文件",
+
+    // 使用正则表达式匹配现有路由配置，找到匹配位置
+    const regex = /(routes:\s*\[\s*{[^]*?\n\s*\}\s*,)/;
+    const match = data.match(regex);
+    if (!match) {
+      console.error("Router configuration not found.");
+      return;
+    }
+
+    // 获取现有代码块的缩进
+    const indent = match[0].match(/\n\s+/)[0].replace(/\n/, "");
+
+    // 在匹配到的代码块下面插入新的路由配置，并进行缩进处理
+    const modifiedContent = data.replace(
+      match[1],
+      `${match[1]}\n${indent}${newRouteConfig
+        .trim()
+        .replace(/\n/g, `\n${indent}`)}`
+    );
+
+    // 保存修改后的文件
+    fs.writeFile(routerFilePath, modifiedContent, "utf8", (err) => {
+      if (err) {
+        console.error("Error writing file:", err);
+      } else {
+        console.log("New route added successfully.");
+      }
+    });
   });
 }
 
-// 更新/安装模版逻辑
-async function updateOrInstall(targetPath, selectedTemplate) {
-  const installOrUpdataFlag = await cacheFile(targetPath, selectedTemplate);
-  if (installOrUpdataFlag === "install") {
-    let spinnerStart = spinner(`正在下载模板...`);
-    await sleep(1000);
-    await installAddTemplate(targetPath, selectedTemplate);
-    spinnerStart.stop(true);
-    log.success("下载模板成功");
-  } else if (installOrUpdataFlag === "update") {
-    let spinnerStart = spinner(`正在更新模板...`);
-    await sleep(1000);
-    await updateAddTemplate(targetPath, selectedTemplate);
-    spinnerStart.stop(true);
-    log.success("更新模板成功");
-  } else {
-    log.success("模版文件中已经是最新版本");
+async function formatEjsInDirectory(folderPath, options) {
+  // 读取文件夹中的所有文件
+  let files = await fs.readdirSync(folderPath);
+
+  console.log(files);
+
+  // 循环处理每个文件
+  for (let i = 0; i < files.length; i++) {
+    let file = files[i];
+    const filePath = path.join(folderPath, file);
+
+    // 使用fs.stat获取文件/文件夹信息
+    let stats = await fs.statSync(filePath);
+    if (stats.isDirectory()) {
+      // 如果是文件夹，则递归调用formatEjsInDirectory处理子目录
+      await formatEjsInDirectory(filePath, options);
+    } else {
+      // 如果是文件，则调用formatEjsFile处理ejs文件
+      await formatEjsFile(filePath, options);
+    }
   }
 }
+
+async function formatEjsFile(filePath, options) {
+  // 检查文件是否为ejs文件
+  if (path.extname(filePath) === ".ejs") {
+    // 读取ejs文件内容
+    let data = await fs.readFileSync(filePath, "utf8");
+    // 使用ejs渲染文件内容
+    const renderedContent = await ejs.render(data, options);
+
+    // 将渲染后的内容写回到文件中
+    await fs.writeFileSync(filePath, renderedContent, "utf8");
+
+    // ejs文件重命名
+    await fs.renameSync(filePath, filePath.replace(".ejs", ""), () => {});
+  }
+}
+
+async function formatTemplate(options) {
+  try {
+    const { PageName } = options;
+
+    const date = new Date();
+
+    options = {
+      ...options,
+      Year: date.getFullYear(),
+      Month: date.getMonth() + 1,
+      Date: date.getDate(),
+    };
+
+    const targetFolderPath = path.join(
+      __dirname,
+      `views/${camelToKebab(PageName)}`
+    );
+
+    console.log("targetFolderPath", targetFolderPath);
+
+    if (!fs.existsSync(targetFolderPath)) {
+      throw new Error(`目标文件夹不存在: ${targetFolderPath}`);
+    }
+
+    console.log("options", options);
+    await formatEjsInDirectory(targetFolderPath, options);
+    await fs.renameSync(
+      targetFolderPath,
+      path.resolve(__dirname, `views/${camelToKebab(PageName)}`)
+    );
+  } catch (e) {
+    console.log(e.message);
+  }
+}
+
 // 选择添加的类型
-function getAddType() {
+function inquireTemplateType() {
+  const choices = Object.keys(TEMPLATE_TYPES).map((type) => ({
+    name: TEMPLATE_TYPES[type].name,
+    value: type,
+  }));
+
   return inquirer({
     type: "list",
-    choices: ADD_CONTENT,
+    choices,
     message: "请选择初始化类型",
     defaultValue: DEFAULT_TYPE,
   });
 }
 // 输入文件名
-function getAddName() {
-  return inquirer({
-    type: "string",
+async function inquireAddName() {
+  const fileName = await inquirer({
+    type: "input",
+    name: "fileName",
     message: "请输入文件名称",
-    defaultValue: "",
+    default: "",
   });
+  let workDir = process.cwd(); // 目标目录
+
+  if (pathExists(`${workDir}/${fileName}`)) {
+    console.log(`当前目录下已经存在 ${fileName} 文件`);
+    return inquireAddName(); // 递归调用，直到输入的文件名在工作目录中不存在为止
+  }
+
+  return fileName;
 }
+
+async function inquireTitle(inputProjectName) {
+  const PageTitle = await inquirer({
+    type: "input",
+    name: "PageTitle",
+    message: "请输入页面的功能，作为文件头的Title：",
+    default: inputProjectName,
+  });
+
+  return PageTitle;
+}
+
 // 选择项目模版
-function getAddTemplate(data) {
-  return inquirer({
-    choices: data,
+async function inquireTemplate(templateType) {
+  const projects = TEMPLATE_TYPES[templateType];
+  const choices = Object.keys(projects)
+    .filter((key) => key !== "name")
+    .map((key) => ({
+      name: projects[key].name,
+      value: projects[key],
+      key: key,
+    }));
+
+  let selectedProject = await inquirer({
+    choices,
     message: "请选择模版",
   });
+
+  const selectedKey = choices.filter(
+    (item) => item.name == selectedProject.name
+  )[0].key;
+  selectedProject.key = selectedKey;
+
+  return selectedProject;
 }
 
-// 安装模版
-function installAddTemplate(targetPath, template) {
-  const { npmName, templateVersion } = template;
-  return npminstall({
-    root: targetPath,
-    storeDir: targetPath,
-    registry: npm.getNpmRegistry(useOriginNpm),
-    pkgs: [
-      {
-        name: npmName,
-        version: templateVersion,
-      },
-    ],
-  });
-}
-// 更新模版
-function updateAddTemplate(targetPath, template) {
-  // 更新
-  const { npmName, templateVersion } = template;
-  return npminstall({
-    root: targetPath,
-    storeDir: targetPath,
-    registry: npm.getNpmRegistry(useOriginNpm),
-    pkgs: [
-      {
-        name: npmName,
-        version: templateVersion,
-      },
-    ],
-  });
-}
-// 缓存文件判断
-async function cacheFile(targetPath, template) {
-  const { npmName } = template;
-  // 判断本地缓存文件是否存在，如果不存在缓存文件就创建缓存文件执行安装逻辑，
-  // 如果缓存文件存在，但是没有模版文件，也需要重新安装。
-  // 如果存在缓存模版文件就针对版本信息进行文件查找，如果是最新版本就退出，执行拷贝命令，否则执行更新逻辑
-  if (!pathExists(targetPath)) {
-    fse.mkdirpSync(targetPath);
-    return "install";
-  } else {
-    const cacheFilePathTemplate = await cacheFilePath(targetPath, template);
-    // 如果存在当前版本文件就直接返回
-    if (pathExists(cacheFilePathTemplate)) {
-      return "none";
+async function downloadTemplateToLocal(project) {
+  let url = project.url;
+
+  const projectCacheDir = path.resolve(cacheDir, project.key);
+  await exec_process(`rm -rf ${projectCacheDir}`);
+
+  try {
+    await exec_process(`git clone ${url} ${projectCacheDir}`);
+
+    if (!fs.existsSync(projectCacheDir)) {
+      throw new Error("执行 git clone 命令时出错");
     }
-    const filfList = await readCacheFile(targetPath, npmName);
-    // 如果有旧版本文件就直接更新，否则就执行安装逻辑
-    if (filfList && filfList.length > 0) {
-      return "update";
-    } else {
-      return "install";
-    }
+    log.success("模板已经下载到本地！");
+  } catch {
+    console.error("执行 git clone 命令时出错:", error);
   }
 }
-// 缓存模版文件格式
-function cacheFilePath(targetPath, template) {
-  const { npmName, templateVersion } = template;
-  return path.resolve(
-    targetPath,
-    `_${npmName.replace("/", "_")}@${templateVersion}@${npmName}`
+
+async function copyTemplateToTargetDir(selectedTemplate, inputProjectName) {
+  const projectPath = path.resolve(
+    cacheDir,
+    selectedTemplate.key.replace(/\s+/g, "_")
+  );
+  await copyFolder(projectPath, path.resolve(__dirname, "views"));
+  await fs.renameSync(
+    path.resolve(__dirname, "views/page-name"),
+    path.resolve(__dirname, `views/${camelToKebab(inputProjectName)}`)
   );
 }
-// 遍历缓存文件
-function readCacheFile(path, templateName) {
-  const fileList = [];
-  const files = fs.readdirSync(path);
-  files.map((items) => {
-    if (items.indexOf(templateName.replace("/", "_")) != -1)
-      fileList.push(items);
-  });
-  return fileList;
-}
 
-// 拷贝文件筛选
-async function copyFile(targetPath, selectedTemplate, rootDir, addName) {
-  const originFile = `${cacheFilePath(targetPath, selectedTemplate)}/${
-    selectedTemplate.template
-  }`;
-  const fileList = fse.readdirSync(originFile);
-  const ignore = selectedTemplate.ignore;
-  fileList.map(async (item) => {
-    let spinnerStart = spinner(`正在拷贝模板文件...`);
-    await sleep(1000);
-    if (ignore.indexOf(item) === -1) {
-      if (item === "views") {
-        fse.copySync(
-          `${originFile}/${item}/${selectedTemplate.pageName}`,
-          `${rootDir}/${addName}`
-        );
-      } else {
-        fse.copySync(`${originFile}/${item}`, `${rootDir}/${addName}/${item}`);
-      }
+async function copyFolder(sourceDir, targetDir) {
+  // 确保目标文件夹存在，如果不存在则创建
+  if (!fs.existsSync(targetDir)) {
+    fs.mkdirSync(targetDir);
+  }
+
+  // 获取源文件夹中的所有文件和子文件夹
+  const files = await fs.promises.readdir(sourceDir);
+
+  // 遍历所有文件和子文件夹
+  for (const file of files) {
+    // 跳过 .git 文件夹
+    if (file === ".git") {
+      continue;
     }
-    spinnerStart.stop(true);
-  });
-  log.success("模版拷贝成功");
+
+    const sourcePath = path.join(sourceDir, file);
+    const targetPath = path.join(targetDir, file);
+
+    // 如果是子文件夹，则递归复制
+    if ((await fs.promises.stat(sourcePath)).isDirectory()) {
+      await copyFolder(sourcePath, targetPath);
+    } else {
+      // 如果是文件，则直接复制
+      await fs.promises.copyFile(sourcePath, targetPath);
+    }
+  }
 }
 
 module.exports = add;
