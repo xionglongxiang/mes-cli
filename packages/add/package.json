@@ -19,7 +19,8 @@
     "npminstall": "^5.3.1",
     "path-exists": "^4.0.0",
     "pkg-up": "^3.1.0",
-    "vue": "^2.6.11"
+    "vue": "^2.6.11",
+    "yaml": "^2.3.1"
   },
   "publishConfig": {
     "access": "public"
