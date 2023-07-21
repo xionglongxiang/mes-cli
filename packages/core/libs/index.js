@@ -230,13 +230,16 @@ async function checkGlobalUpdate() {
     NPM_NAME,
     currentVersion
   );
+  console.log("lastVersion", lastVersion);
+  console.log("currentVersion", currentVersion);
+
   if (lastVersion && semver.gt(lastVersion, currentVersion)) {
     log.warn(
       colors.yellow(`请手动更新 ${NPM_NAME}，当前版本：${packageConfig.version}，最新版本：${lastVersion}
                 更新命令： npm install -g ${NPM_NAME}`)
     );
   } else {
-    log.success("当前 mes-cli 是最新版本！");
+    log.verbose("当前 mes-cli 是最新版本！");
   }
 }
 
