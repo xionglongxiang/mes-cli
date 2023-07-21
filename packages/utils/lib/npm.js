@@ -52,7 +52,7 @@ function getLatestSemverVersion(baseVersion, versions) {
       return semver.satisfies(version, "^" + baseVersion);
     })
     .sort(function (a, b) {
-      return semver.gt(b, a);
+      return semver.gt(a, b) ? -1 : 1;
     });
   return versions[0];
 }
