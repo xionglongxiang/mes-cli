@@ -1,9 +1,9 @@
 <!--
-    * Title    : <%= Title %>
+    * Title    : mingba
     * Desc     : 
     * Copyright: Shanghai Batchsight Pharmaceutical Technologies, Inc. Copyright(c) 2023
     * Version  : 1.0
-    * History  : create <%= Year %>年 <%= Month %>月 <%= Date %>日 by <%= Author %>
+    * History  : create 2023年 7月 21日 by PageAuthor
 -->
 <template>
   <div></div>
@@ -11,7 +11,7 @@
 
 <script setup lang="ts">
   defineOptions({
-    name: "<%= PageName %>Page",
+    name: "NewPagePage",
   });
 </script>
 

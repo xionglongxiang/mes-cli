@@ -53,6 +53,7 @@ function registerCommand() {
       console.log("请使用 'mes config set <key> <value>' 来设置个性化信息。");
       console.log("请使用 'mes config get <key>' 来获取已设置的内容。");
 
+      console.log(`获取 ${key} `);
       const packageName = "@mes-cli/config";
       await execCommand({
         packageName,
@@ -71,10 +72,15 @@ function registerCommand() {
       console.log(`设置 ${key} 为 ${value}`);
       // 例如，您可以在此处调用相应的函数来设置个性化信息
       const packageName = "@mes-cli/config";
-      await execCommand({
-        packageName,
-        packageVersion: packageConfig.version,
-      });
+      await execCommand(
+        {
+          packageName,
+          packageVersion: packageConfig.version,
+        },
+        {
+          subCommand: key,
+        }
+      );
     });
 
   // 定义 'mes config get' 子命令
@@ -163,9 +169,10 @@ async function execCommand(
         version: packageVersion,
       });
 
-      if (!(await package.exists())) {
+      let packageExists = await package.exists();
+      if (!packageExists) {
         await package.install();
-      } else if (await package.exists()) {
+      } else if (packageExists) {
         await package.update();
       }
 

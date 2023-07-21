@@ -9,8 +9,11 @@ const path = require("path");
 const { homedir } = require("os");
 const cacheDir = `${homedir()}/${DEFAULT_CLI_HOME}`;
 
-const fs = require("fs");
 const { log } = require("@mes-cli/utils");
+const fs = require("fs");
+const yaml = require("js-yaml");
+const path = require("path");
+const yamlFilePath = path.join(__dirname, ".mes-cli", "variables.yaml");
 
 log.level = "info";
 

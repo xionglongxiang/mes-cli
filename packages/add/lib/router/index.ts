@@ -14,6 +14,26 @@ const router = createRouter({
       component: HomeView,
     },
     {
+        path: '/abd',
+        name: 'abd',
+        component: () => import('../views/abd/index.vue')
+        },
+    {
+        path: '/new-page',
+        name: 'NewPage',
+        component: () => import('../views/new-page/index.vue')
+        },
+    {
+        path: '/new-page',
+        name: 'NewPage',
+        component: () => import('../views/new-page/index.vue')
+        },
+    {
+        path: '/home-page',
+        name: 'HomePage',
+        component: () => import('../views/home-page/index.vue')
+        },
+    {
         path: '/mes-page',
         name: 'MesPage',
         component: () => import('../views/mes-page/index.vue')

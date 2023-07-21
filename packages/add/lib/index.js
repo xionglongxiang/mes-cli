@@ -180,6 +180,8 @@ async function formatTemplate(options) {
     }
 
     console.log("options", options);
+    console.log("targetFolderPath", targetFolderPath);
+    console.log("options", options);
     await formatEjsInDirectory(targetFolderPath, options);
     await fs.renameSync(
       targetFolderPath,
