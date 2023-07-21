@@ -14,7 +14,7 @@ function getNpmInfo(npm, registry) {
   const register = registry || getNpmRegistry();
   const url = urlJoin(register, npm);
 
-  console.log("url", url);
+  console.log("npm url", url);
   return axios.get(url).then(function (response) {
     try {
       if (response.status === 200) {
