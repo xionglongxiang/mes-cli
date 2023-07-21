@@ -124,8 +124,6 @@ async function formatEjsInDirectory(folderPath, options) {
   // 读取文件夹中的所有文件
   let files = await fs.readdirSync(folderPath);
 
-  console.log(files);
-
   // 循环处理每个文件
   for (let i = 0; i < files.length; i++) {
     let file = files[i];
@@ -176,8 +174,6 @@ async function formatTemplate(options) {
       __dirname,
       `views/${camelToKebab(PageName)}`
     );
-
-    console.log("targetFolderPath", targetFolderPath);
 
     if (!fs.existsSync(targetFolderPath)) {
       throw new Error(`目标文件夹不存在: ${targetFolderPath}`);
