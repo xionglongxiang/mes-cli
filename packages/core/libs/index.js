@@ -235,9 +235,11 @@ async function checkGlobalUpdate() {
 
   if (lastVersion && semver.gt(lastVersion, currentVersion)) {
     log.warn(
-      colors.yellow(`请手动更新 ${NPM_NAME}，当前版本：${packageConfig.version}，最新版本：${lastVersion}
-                更新命令： npm install -g ${NPM_NAME}`)
+      colors.yellow(
+        `请手动更新 ${NPM_NAME}，当前版本：${packageConfig.version}，最新版本：${lastVersion}`
+      )
     );
+    log.warn(colors.yellow(`更新命令： npm i -g ${NPM_NAME}`));
   } else {
     log.verbose("当前 mes-cli 是最新版本！");
   }
@@ -302,6 +304,6 @@ function checkNodeVersion() {
 }
 
 function checkPkgVersion() {
-  log.notice("cli", packageConfig.version);
+  log.success("mes-cli 当前版本：", packageConfig.version);
   log.success(locale.welcome);
 }
