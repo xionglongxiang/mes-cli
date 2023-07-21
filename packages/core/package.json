@@ -1,6 +1,6 @@
 {
   "name": "mes-cli",
-  "version": "1.13.2",
+  "version": "1.13.3",
   "description": "mes-cli core",
   "author": "xionglongxiang <xionglongxiang@126.com>",
   "homepage": "https://github.com/xionglongxiang",
@@ -33,8 +33,8 @@
     "mocha": "^8.1.3"
   },
   "dependencies": {
-    "@mes-cli/add": "^1.13.2",
-    "@mes-cli/utils": "^1.13.2",
+    "@mes-cli/add": "^1.13.3",
+    "@mes-cli/utils": "^1.13.3",
     "colors": "^1.4.0",
     "commander": "^6.1.0",
     "dotenv": "^8.2.0",
