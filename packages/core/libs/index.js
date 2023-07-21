@@ -230,8 +230,8 @@ async function checkGlobalUpdate() {
     NPM_NAME,
     currentVersion
   );
-  console.log("lastVersion", lastVersion);
   console.log("currentVersion", currentVersion);
+  console.log("lastVersion", lastVersion);
 
   if (lastVersion && semver.gt(lastVersion, currentVersion)) {
     log.warn(
