@@ -15,7 +15,7 @@ const { log } = require("@mes-cli/utils");
 log.level = "info";
 
 async function config(options = {}) {
-  console.log("exec config command in config lib");
+  console.log("exec config command in config lib", options);
   try {
     log.verbose("config", options);
     // 完成项目初始化的准备和校验工作
