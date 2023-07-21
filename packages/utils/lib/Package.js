@@ -105,9 +105,12 @@ class Package {
 
     const latestVersion = await this.getLatestVersion();
 
+    console.log(latestVersion, this.packageVersion);
+
     if (latestVersion === this.packageVersion) {
       return;
     }
+
     return npminstall({
       root: this.targetPath,
       storeDir: this.storePath,
