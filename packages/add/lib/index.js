@@ -93,20 +93,22 @@ function addRouter(projectName) {
     }
 
     // 使用正则表达式匹配现有路由配置，找到匹配位置
-    const regex = /(routes:\s*\[\s*{[^]*?\n\s*\}\s*,)/;
+    const regex = /(routes:\s*\[\s*{[^]*?\n\s*\}\s*(,*))/g;
     const match = data.match(regex);
+
     if (!match) {
       console.error("Router configuration not found.");
       return;
     }
 
+    let hasComma = match[0].substr(-1) === ",";
     // 获取现有代码块的缩进
     const indent = match[0].match(/\n\s+/)[0].replace(/\n/, "");
 
     // 在匹配到的代码块下面插入新的路由配置，并进行缩进处理
     const modifiedContent = data.replace(
-      match[1],
-      `${match[1]}\n${indent}${newRouteConfig
+      match[0],
+      `${match[0]}${hasComma ? "" : ","}\n${indent}${newRouteConfig
         .trim()
         .replace(/\n/g, `\n${indent}`)}`
     );
