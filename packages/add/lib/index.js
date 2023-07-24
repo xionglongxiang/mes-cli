@@ -8,13 +8,13 @@ const ejs = require("ejs");
 
 const util = require("util");
 const exec_process = util.promisify(require("child_process").exec);
+const { findNearestDirectoryWithPackageJson } = require("./getRootDir");
 
 const { homedir } = require("os");
 const { DEFAULT_CLI_HOME, SHOW_FILE_TYPE } = require("./const");
 const { inquirer, log, npm, spinner, sleep } = require("@mes-cli/utils");
-const gitRootDir = require("git-root-dir");
 
-let workDir = gitRootDir();
+let workDir = findNearestDirectoryWithPackageJson();
 
 const templateTypeFilePath = path.resolve(__dirname, "./template_type.yaml");
 const TEMPLATE_TYPES = extractTypeFromYAML(templateTypeFilePath);
