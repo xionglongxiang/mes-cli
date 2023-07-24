@@ -24,10 +24,10 @@
   resolved "https://registry.npmjs.org/@kwsites/promise-deferred/-/promise-deferred-1.1.1.tgz"
   integrity sha512-GaHYm+c0O9MjZRu0ongGBRbinu8gVAMd2UZjji6jVmqKtZluZnptXGWhz1E8j8D2HJ3f/yMxKAUC0b+57wncIw==
 
-"@mes-cli/utils@^1.11.0":
-  version "1.11.0"
-  resolved "https://registry.npmjs.org/@mes-cli/utils/-/utils-1.11.0.tgz#8cd0957cf8060bd3cc4eaa802e5f94b98bc6aec9"
-  integrity sha512-EkUpNUj53wo/vYJEH7oz9G3r00NnDG7TD7rzE0AGcScNuA0/YrSMSjXbjRTBGoKgkWZUDPftz+mc4ZgqwvsUuw==
+"@mes-cli/utils@^1.14.2":
+  version "1.14.2"
+  resolved "https://registry.npmjs.org/@mes-cli/utils/-/utils-1.14.2.tgz#7e285259ba2e49a7eebf7c6d4fa3fbf595e9519f"
+  integrity sha512-pcrPB/6DZjhoKd4k4L8Yutuf8GPTm5gFk78lC8AxXutneh51uPpt2AB+i7b3fvZ8e0vqeXqsACnUqVGUfZ/vnw==
   dependencies:
     axios "^0.20.0"
     cli-spinner "^0.2.10"

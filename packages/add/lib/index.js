@@ -12,6 +12,9 @@ const exec_process = util.promisify(require("child_process").exec);
 const { homedir } = require("os");
 const { DEFAULT_CLI_HOME, SHOW_FILE_TYPE } = require("./const");
 const { inquirer, log, npm, spinner, sleep } = require("@mes-cli/utils");
+const gitRootDir = require("git-root-dir");
+
+let workDir = gitRootDir();
 
 const templateTypeFilePath = path.resolve(__dirname, "./template_type.yaml");
 const TEMPLATE_TYPES = extractTypeFromYAML(templateTypeFilePath);
@@ -22,7 +25,6 @@ const cacheDir = `${homedir()}/${DEFAULT_CLI_HOME}`;
 
 async function add() {
   log.level = process.env.LOG_LEVEL; // 进入add后log.level的层级还是info
-  let workDir = process.cwd(); // 目标目录
 
   log.verbose("cacheDir", cacheDir);
   // 1. 选择添加的类型
@@ -76,12 +78,12 @@ function addRouter(projectName) {
   {
     path: '/${kebab}',
     name: '${projectName}',
-    component: () => import('../views/${kebab}/index.vue')
+    component: () => import('../src/views/${kebab}/index.vue')
     },
   `;
 
   // 生成router/index.ts的绝对路径
-  const routerFilePath = path.resolve(__dirname, "router/index.ts");
+  const routerFilePath = path.resolve(workDir, "src/router/index.ts");
 
   // 读取现有的router/index.ts文件内容
   fs.readFile(routerFilePath, "utf8", (err, data) => {
@@ -171,8 +173,8 @@ async function formatTemplate(options) {
     };
 
     const targetFolderPath = path.join(
-      __dirname,
-      `views/${camelToKebab(PageName)}`
+      workDir,
+      `src/views/${camelToKebab(PageName)}`
     );
 
     if (!fs.existsSync(targetFolderPath)) {
@@ -185,7 +187,7 @@ async function formatTemplate(options) {
     await formatEjsInDirectory(targetFolderPath, options);
     await fs.renameSync(
       targetFolderPath,
-      path.resolve(__dirname, `views/${camelToKebab(PageName)}`)
+      path.resolve(workDir, `src/views/${camelToKebab(PageName)}`)
     );
   } catch (e) {
     console.log(e.message);
@@ -214,7 +216,6 @@ async function inquireAddName() {
     message: "请输入文件名称",
     default: "",
   });
-  let workDir = process.cwd(); // 目标目录
 
   if (pathExists(`${workDir}/${fileName}`)) {
     console.log(`当前目录下已经存在 ${fileName} 文件`);
@@ -282,10 +283,10 @@ async function copyTemplateToTargetDir(selectedTemplate, inputProjectName) {
     cacheDir,
     selectedTemplate.key.replace(/\s+/g, "_")
   );
-  await copyFolder(projectPath, path.resolve(__dirname, "views"));
+  await copyFolder(projectPath, path.resolve(workDir, "src/views"));
   await fs.renameSync(
-    path.resolve(__dirname, "views/page-name"),
-    path.resolve(__dirname, `views/${camelToKebab(inputProjectName)}`)
+    path.resolve(workDir, "src/views/page-name"),
+    path.resolve(workDir, `src/views/${camelToKebab(inputProjectName)}`)
   );
 }
 

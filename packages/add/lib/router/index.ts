@@ -14,6 +14,16 @@ const router = createRouter({
       component: HomeView,
     },
     {
+        path: '/root-dir',
+        name: 'RootDir',
+        component: () => import('../src/views/root-dir/index.vue')
+        },
+    {
+        path: '/page-name',
+        name: 'PageName',
+        component: () => import('../src/views/page-name/index.vue')
+        },
+    {
         path: '/abd',
         name: 'abd',
         component: () => import('../views/abd/index.vue')
